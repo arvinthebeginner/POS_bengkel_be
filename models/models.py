@@ -65,6 +65,24 @@ class StokModel:
     def delete_stok(stok_id):
         return stok_collection.delete_one({'_id': ObjectId(stok_id)})
 
+    @staticmethod
+    def decrement_stok(stok_id, branch_id, qty):
+        """Kurangi stok secara atomic, hanya kalau jumlahnya masih cukup
+        (dicek & diubah dalam satu operasi lewat filter 'stok': {'$gte': qty}
+        supaya aman dari race condition dua transaksi bersamaan).
+        Return True kalau berhasil dikurangi, False kalau stok tidak cukup/tidak ditemukan."""
+        result = stok_collection.update_one(
+            {'_id': ObjectId(stok_id), 'branch_id': ObjectId(branch_id), 'stok': {'$gte': qty}},
+            {'$inc': {'stok': -qty}},
+        )
+        return result.modified_count == 1
+
+    @staticmethod
+    def increment_stok(stok_id, qty):
+        """Kembalikan stok (dipakai untuk rollback kalau ada item lain
+        dalam transaksi yang sama gagal dikurangi)."""
+        stok_collection.update_one({'_id': ObjectId(stok_id)}, {'$inc': {'stok': qty}})
+
 
 # ==============================
 #  BRANCH MODEL

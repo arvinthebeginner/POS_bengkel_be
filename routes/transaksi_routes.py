@@ -22,18 +22,64 @@ def kasir_stok():
 def create_transaksi():
     branch_id = get_branch_id_from_jwt()
     body = request.get_json(silent=True) or {}
-    barang = body.get("barang")
-    total = body.get("total")
-    if barang is None or total is None:
-        return jsonify(success=False, message="Field 'barang' & 'total' wajib diisi"), 400
+    barang_input = body.get("barang")
+
+    if not barang_input or not isinstance(barang_input, list):
+        return jsonify(success=False, message="Field 'barang' wajib diisi dan berupa list"), 400
+
+    items = []
+    for entry in barang_input:
+        stok_id = entry.get("stok_id") if isinstance(entry, dict) else None
+        qty = entry.get("qty") if isinstance(entry, dict) else None
+
+        if not stok_id or not isinstance(qty, int) or qty <= 0:
+            return jsonify(
+                success=False,
+                message="Setiap item wajib punya 'stok_id' dan 'qty' (bilangan bulat positif)",
+            ), 400
+
+        stok_data = StokModel.find_by_id(stok_id)
+        if not stok_data or str(stok_data["branch_id"]) != branch_id:
+            return jsonify(success=False, message=f"Stok dengan id {stok_id} tidak ditemukan"), 404
+
+        if stok_data["stok"] < qty:
+            return jsonify(
+                success=False,
+                message=(
+                    f"Stok '{stok_data['nama']}' tidak mencukupi "
+                    f"(sisa {stok_data['stok']}, diminta {qty})"
+                ),
+            ), 400
+
+        items.append({
+            "stok_id": stok_id,
+            "nama": stok_data["nama"],
+            "harga": stok_data["harga"],
+            "qty": qty,
+        })
+
+    decremented = []
+    for item in items:
+        success = StokModel.decrement_stok(item["stok_id"], branch_id, item["qty"])
+        if not success:
+            for done in decremented:
+                StokModel.increment_stok(done["stok_id"], done["qty"])
+            return jsonify(
+                success=False,
+                message=f"Stok '{item['nama']}' berubah saat transaksi diproses, silakan coba lagi",
+            ), 409
+        decremented.append(item)
+
+    barang_record = [{"nama": i["nama"], "qty": i["qty"], "harga": i["harga"]} for i in items]
+    total = sum(i["harga"] * i["qty"] for i in items)
 
     data = {
-        "barang": barang,
-        "total": float(total),
+        "barang": barang_record,
+        "total": total,
         "branch_id": ObjectId(branch_id),
     }
     TransaksiModel.insert_transaksi(data)
-    return jsonify(success=True), 201
+    return jsonify(success=True, data={"total": total}), 201
 
 
 @transaksi_bp.get("/transaksi")
