@@ -67,10 +67,6 @@ class StokModel:
 
     @staticmethod
     def decrement_stok(stok_id, branch_id, qty):
-        """Kurangi stok secara atomic, hanya kalau jumlahnya masih cukup
-        (dicek & diubah dalam satu operasi lewat filter 'stok': {'$gte': qty}
-        supaya aman dari race condition dua transaksi bersamaan).
-        Return True kalau berhasil dikurangi, False kalau stok tidak cukup/tidak ditemukan."""
         result = stok_collection.update_one(
             {'_id': ObjectId(stok_id), 'branch_id': ObjectId(branch_id), 'stok': {'$gte': qty}},
             {'$inc': {'stok': -qty}},
@@ -79,8 +75,6 @@ class StokModel:
 
     @staticmethod
     def increment_stok(stok_id, qty):
-        """Kembalikan stok (dipakai untuk rollback kalau ada item lain
-        dalam transaksi yang sama gagal dikurangi)."""
         stok_collection.update_one({'_id': ObjectId(stok_id)}, {'$inc': {'stok': qty}})
 
 
@@ -93,6 +87,10 @@ class BranchModel:
     @staticmethod
     def get_all():
         return list(branch_collection.find())
+
+    @staticmethod
+    def get_active():
+        return list(branch_collection.find({'activeStatus': 'Y'}))
 
     @staticmethod
     def find_by_id(branch_id):
