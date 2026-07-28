@@ -14,6 +14,7 @@ steps:
       - --image=asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA
       - --region=asia-southeast2
       - --platform=managed
+      - --max-instances=3
 
 images:
   - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA'
