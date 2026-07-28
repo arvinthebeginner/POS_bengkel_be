@@ -1,9 +1,9 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA']
+    args: ['push', 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -11,12 +11,12 @@ steps:
       - run
       - deploy
       - vms-api
-      - --image=gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA
+      - --image=asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA
       - --region=asia-southeast2
       - --platform=managed
 
 images:
-  - 'gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA'
+  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/vms-api/vms-api:$COMMIT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
