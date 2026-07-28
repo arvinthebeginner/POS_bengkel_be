@@ -155,6 +155,9 @@ transaksi_collection = db['VMS_Transaksi']
 class TransaksiModel:
     @staticmethod
     def insert_transaksi(data):
+        oid = ObjectId()
+        data['_id'] = oid
+        data['kode'] = f"TRX-{str(oid)[-6:].upper()}"
         data['tanggal'] = datetime.now().strftime("%Y-%m-%d %H:%M")
         return transaksi_collection.insert_one(data)
 

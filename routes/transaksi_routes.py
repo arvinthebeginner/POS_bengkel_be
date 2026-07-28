@@ -79,7 +79,7 @@ def create_transaksi():
         "branch_id": ObjectId(branch_id),
     }
     TransaksiModel.insert_transaksi(data)
-    return jsonify(success=True, data={"total": total}), 201
+    return jsonify(success=True, data={"total": total, "kode": data["kode"]}), 201
 
 
 @transaksi_bp.get("/transaksi")
