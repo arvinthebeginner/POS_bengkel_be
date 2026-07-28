@@ -1,0 +1,16 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA', '.']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - vms-api
+      - --image=gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA
+      - --region=asia-southeast2
+      - --platform=managed
+
+images:
+  - 'gcr.io/$PROJECT_ID/vms-api:$COMMIT_SHA'
